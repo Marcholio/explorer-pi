@@ -1,6 +1,7 @@
 import RPi.GPIO as IO
 from time import sleep
 
+IO.setwarnings(False)
 IO.setmode(IO.BCM)
 
 class MotorController:
@@ -19,20 +20,30 @@ class MotorController:
     def __init__(self):
         self.stop()
 
+    def dodgeRight(self):
+        self.turnRight(45)
+        self.forward()
+        sleep(2)
+        self.turnLeft(45)
+
+    def dodgeLeft(self):
+        self.turnLeft(45)
+        self.forward()
+        sleep(2)
+        self.turnRight(45)
+
     def stop(self):
         self.rightStop()
         self.leftStop()
 
-    def forward(self, duration):
+    def forward(self):
         self.rightForward()
         self.leftForward()
-        sleep(duration)
 
-    def reverse(self, duration):
+    def reverse(self):
         self.rightReverse()
         self.leftReverse()
-        sleep(duration)
-
+        
     def turnRight(self, degrees):
         self.rightStop()
         self.leftForward()

@@ -1,5 +1,6 @@
 import RPi.GPIO as IO
 
+IO.setwarnings(False)
 IO.setmode(IO.BCM)
 
 class ServoController:
@@ -21,4 +22,3 @@ class ServoController:
     def setServo(self, name, degrees):
         cycle = min(max(degrees / 24.0 + 6.25, 2.5), 10.0)
         self.pwms[name].ChangeDutyCycle(cycle)
-        print cycle
