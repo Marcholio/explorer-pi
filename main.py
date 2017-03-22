@@ -1,13 +1,10 @@
 import RPi.GPIO as IO
 from MotorController import MotorController
+from ServoController import ServoController
 from time import sleep
 
 move = MotorController()
 
-move.turnLeftReverse(90)
-
-move.forward(0.5)
-
-move.turnRight(90)
+servos = ServoController()
 
 IO.cleanup()
