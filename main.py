@@ -8,51 +8,53 @@ ds = DistanceSensor(echo=12, trigger=18)
 move = MotorController()
 servos = ServoController()
 
-safeDistance = 0.20
-
-def checkSurroundings():
-    l = check('left')
-    r = check('right')
-    return l, r
+safeDistance = 0.25
+leftMax = 0.4
+leftMin = 0.25
 
 def check(direction):
-    d = 0
-    cur = 0
-
-    if (direction == 'left'):
-        d = 10
+    if (direction == 'front'):
+        servos.setServo('head', 0)
+    elif (direction == 'left'):
+        servos.setServo('head', 45)
     else:
-        d = -10
+        servos.setServo('head', -45)
         
-    # Turn head by 10 degree steps and measure distance at each point
-    while (abs(d) < 65):
-        servos.setServo('head', d)
-        sleep(0.2)
-        dist = ds.distance
-        cur += dist
-
-        if (direction == 'left'):
-            d += 10
-        else:
-            d -= 10
-    return cur
+    sleep(0.2)
+    dist = ds.distance
+    print(direction + '%.2f' %(dist))
+    return dist
 
 stop = False
 
 while (not stop):
     move.forward()
     dist = ds.distance
+    print dist
     stop = dist < safeDistance
 move.stop()
 
-left, right = checkSurroundings()
+move.turnRight(90)
+
+i = 0
+
+while (i < 40):
+    frontDist = check('front')
+    if (frontDist < safeDistance):
+        if(frontDist > 0.15):
+            move.turnRight(10)
+        else:
+            move.spinRight(20)
+    else:
+        leftDistance = check('left')
+        if (leftDistance < leftMin):
+            move.turnRight(2)
+        elif (leftDistance > leftMax):
+            move.turnLeft(2)
+        else:
+            move.forward()
+    i += 1
 
 servos.setServo('head', 0)
-
-if (left < right):
-    move.dodgeRight()
-else:
-    move.dodgeLeft()
-
 move.stop()    
-sleep(0.1)
+sleep(1)
