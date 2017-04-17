@@ -1,5 +1,5 @@
 import RPi.GPIO as IO
-from time import sleep
+import time
 
 IO.setwarnings(False)
 IO.setmode(IO.BCM)
@@ -10,7 +10,8 @@ class MotorController:
     rightPins = [25,24,23]
     leftPins = [17,27,22]
     fullRound = 4.8
-
+    lastTime = 0
+    
     # Initialize all motor pins as output
     for p in rightPins:
         IO.setup(p, IO.OUT)
@@ -23,7 +24,7 @@ class MotorController:
     def dodgeRight(self):
         self.turnRight(45)
         self.forward()
-        sleep(2)
+        time.sleep(2)
         self.turnLeft(45)
 
     def dodgeLeft(self):
@@ -37,6 +38,9 @@ class MotorController:
         self.leftStop()
 
     def forward(self):
+        if( round(time.time()) != self.lastTime):
+            self.lastTime = round(time.time())
+            self.turnLeft(5)
         self.rightForward()
         self.leftForward()
 
@@ -47,23 +51,23 @@ class MotorController:
     def turnRight(self, degrees):
         self.rightStop()
         self.leftForward()
-        sleep((degrees / 360.0) * self.fullRound)
+        time.sleep((degrees / 360.0) * self.fullRound)
 
     def turnLeft(self, degrees):
         self.leftStop()
         self.rightForward()
         # Right track is a bit weaker somehow so need to compensate that by running longer
-        sleep((degrees / 180.0) * self.fullRound)
+        time.sleep((degrees / 180.0) * self.fullRound)
 
     def spinRight(self, degrees):
         self.rightReverse()
         self.leftForward()
-        sleep((degrees / 360.0) * self.fullRound)
+        time.sleep((degrees / 360.0) * self.fullRound)
 
     def spinLeft(self, degrees):
         self.rightForward()
         self.leftReverse()
-        sleep((degrees / 360.0) * self.fullRound)
+        time.sleep((degrees / 360.0) * self.fullRound)
 
     def turnRightReverse(self, degrees):
         self.rightStop()
@@ -74,7 +78,7 @@ class MotorController:
         self.leftStop()
         self.rightReverse()
         # Right track is a bit weaker somehow so need to compensate that by running longer
-        sleep((degrees / 180.0) * self.fullRound)
+        time.sleep((degrees / 180.0) * self.fullRound)
 
     def rightForward(self):
         self.setPin(self.rightPins[0], False)

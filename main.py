@@ -30,7 +30,6 @@ stop = False
 while (not stop):
     move.forward()
     dist = ds.distance
-    print dist
     stop = dist < safeDistance
 move.stop()
 
@@ -38,7 +37,7 @@ move.turnRight(90)
 
 i = 0
 
-while (i < 40):
+while (i < 1):
     frontDist = check('front')
     if (frontDist < safeDistance):
         if(frontDist > 0.15):
