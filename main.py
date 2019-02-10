@@ -1,111 +1,54 @@
 import RPi.GPIO as IO
-from gpiozero import DistanceSensor
-from MotorController import MotorController
 from ServoController import ServoController
 from time import sleep
 
-ds = DistanceSensor(echo=12, trigger=18)
-move = MotorController()
-servos = ServoController()
+RF_SHOULDER = 18
+RF_ELBOW = 23
+LB_SHOULDER = 6
+LB_ELBOW = 13
 
-safeDistance = 0.25
-sideMax = 0.4
-sideMin = 0.2
+pins = [RF_SHOULDER, RF_ELBOW, LB_SHOULDER, LB_ELBOW]
 
-def check(direction):
-    if (direction == 'front'):
-        curMin = 1.0
-        for i in range(-45, 45):
-            servos.setServo('head', i)
-            sleep(0.05)
-            dist = ds.distance
-            curMin = min(dist, curMin)
-        return curMin
-            
-    elif (direction == 'left'):
-        servos.setServo('head', 45)
-    else:
-        servos.setServo('head', -45)
+SHOULDER_MIN = -60
+SHOULDER_MID = 0
+SHOULDER_MAX = 60
+
+ELBOW_MIN = -10
+ELBOW_MID = 0
+ELBOW_MAX = 10
+
+SPEED = 1
+
+right_legs = [[RF_SHOULDER, RF_ELBOW]]
+left_legs = [[LB_SHOULDER, LB_ELBOW]]
+right_leg_positions = [0]
+left_leg_positions = [2]
+
+servos = ServoController(pins)
+
+def forward():
+    right_shoulder_sequence = [SHOULDER_MAX, SHOULDER_MID, SHOULDER_MIN, SHOULDER_MID]
+    left_shoulder_sequence = [SHOULDER_MIN, SHOULDER_MID, SHOULDER_MAX, SHOULDER_MID]
+    elbow_sequence = [ELBOW_MAX, ELBOW_MIN, ELBOW_MAX, ELBOW_MID]
+
+    for i in range(len(right_legs)):
+        right_leg_positions[i] += 1
+        right_leg_positions[i] = right_leg_positions[i] % len(right_shoulder_sequence)
+
+        servos.setServo(right_legs[i][0], right_shoulder_sequence[right_leg_positions[i]])
+        servos.setServo(right_legs[i][1], elbow_sequence[right_leg_positions[i]])
+
+    for i in range(len(left_legs)):
+        left_leg_positions[i] += 1
+        left_leg_positions[i] = left_leg_positions[i] % len(left_shoulder_sequence)
+
+        servos.setServo(left_legs[i][0], left_shoulder_sequence[left_leg_positions[i]])
+        servos.setServo(left_legs[i][1], elbow_sequence[left_leg_positions[i]])
         
-    sleep(0.2)
-    dist = ds.distance
-    return dist
+    sleep(1.0/SPEED)
     
-stop = False
-angle = 0
-distDir = -1
-move.forward()
 
-while (not stop):
-    servos.setServo('head', angle)
-    angle += distDir
-
-    if (angle > 45):
-        distDir = -1
-    elif (angle < -45):
-        distDir = 1
+for i in range(8):
+    forward()
     
-    sleep(0.01)
-    dist = ds.distance
-    stop = dist < safeDistance
-
-move.stop()
-
-leftSum = 0
-for i in range(0,45):
-    servos.setServo('head', i)
-    sleep(0.02)
-    leftSum += ds.distance
-
-rightSum = 0
-for i in range(-45, 0):
-    servos.setServo('head', i)
-    sleep(0.02)
-    rightSum += ds.distance
-
-direction = ''
-
-print ("LEFT: %.5f, RIGHT: %.5f" % (leftSum, rightSum))
-
-if (leftSum > rightSum):
-    move.turnLeft(45)
-    direction = 'left'
-    i = 0
-    while (i < 2):
-        frontDist = check('front')
-        if (frontDist < safeDistance):
-            if(frontDist > 0.15):
-                move.turnLeft(5)
-            else:
-                move.spinLeft(20)
-        else:
-            rightDistance = check('right')
-            if (rightDistance < sideMin):
-                move.turnLeft(2)
-            elif (rightDistance > sideMax):
-                move.turnRight(2)
-        move.forward()
-        i += 1
-else:
-    move.turnRight(45)
-    direction = 'right'
-    i = 0
-    while (i < 2):
-        frontDist = check('front')
-        if (frontDist < safeDistance):
-            if(frontDist > 0.15):
-                move.turnRight(5)
-            else:
-                move.spinRight(20)
-        else:
-            leftDistance = check('left')
-            if (leftDistance < sideMin):
-                move.turnRight(2)
-            elif (leftDistance > sideMax):
-                move.turnLeft(2)
-        move.forward()
-        i += 1
-
-servos.setServo('head', 0)
-move.stop()    
-sleep(1)
+servos.reset()
